@@ -25,7 +25,7 @@ class Config:
     SECRET_KEY = os.getenv("SECRET_KEY", "abs_stream_fucker_secret")
     
     # Premium
-    PREMIUM_USERS = [int(x) for x in os.getenv("PREMIUM_USERS", "").split(",") if x]
+    PREMIUM_USERS = [int(x) for x in os.getenv("PREMIUM_USERS", "").split(",") if x.strip()]
     
     # Storage
     STORAGE_PATH = os.getenv("STORAGE_PATH", "./downloads")
@@ -48,6 +48,12 @@ class Config:
     
     # Supported leeching sites
     LEECH_SITES = [
-        "terabox", "hubdrive", "hubcloud", 
-        "gdflix", "filepress", "youtube.com", 
-        "youtu.be", "instagram.com"
+        "terabox",
+        "hubdrive",
+        "hubcloud",
+        "gdflix",
+        "filepress",
+        "youtube.com",
+        "youtu.be",
+        "instagram.com"
+    ]
