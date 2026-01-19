@@ -1,0 +1,40 @@
+version: '3.8'
+
+services:
+  mongodb:
+    image: mongo:latest
+    container_name: abs_mongodb
+    restart: always
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongodb_data:/data/db
+    environment:
+      - MONGO_INITDB_DATABASE=abs_stream_fucker
+
+  bot:
+    build: .
+    container_name: abs_bot
+    restart: always
+    depends_on:
+      - mongodb
+    environment:
+      - BOT_TOKEN=${BOT_TOKEN}
+      - API_ID=${API_ID}
+      - API_HASH=${API_HASH}
+      - MONGO_URI=mongodb://mongodb:27017
+      - DB_NAME=abs_stream_fucker
+      - WEB_URL=${WEB_URL}
+      - WEB_PORT=8000
+      - OWNER_ID=${OWNER_ID}
+      - LOG_CHANNEL=${LOG_CHANNEL}
+      - SECRET_KEY=${SECRET_KEY}
+      - PREMIUM_USERS=${PREMIUM_USERS}
+      - STORAGE_PATH=./downloads
+    volumes:
+      - ./downloads:/app/downloads
+    ports:
+      - "8000:8000"
+
+volumes:
+  mongodb_data:
