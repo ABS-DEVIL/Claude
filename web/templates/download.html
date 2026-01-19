@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Download - {{ file_name }}</title>
+    <style>
+        body {
+            background: #0a0a0a;
+            color: #fff;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+        }
+        .container {
+            max-width: 600px;
+            width: 100%;
+            background: #1a1a1a;
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+            text-align: center;
+        }
+        h1 {
+            margin-bottom: 30px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            font-size: 2.5em;
+        }
+        .file-info {
+            background: #2a2a2a;
+            padding: 25px;
+            border-radius: 15px;
+            margin-bottom: 30px;
+            text-align: left;
+        }
+        .file-info-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 15px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid #3a3a3a;
+        }
+        .file-info-row:last-child {
+            border-bottom: none;
+            margin-bottom: 0;
+            padding-bottom: 0;
+        }
+        .label {
+            color: #667eea;
+            font-weight: bold;
+        }
+        .value {
+            color: #fff;
+            word-break: break-all;
+        }
+        .password-section {
+            background: #2a2a2a;
+            padding: 25px;
+            border-radius: 15px;
+            margin-bottom: 20px;
+        }
+        input[type="password"] {
+            width: 100%;
+            padding: 15px;
+            background: #1a1a1a;
+            border: 2px solid #667eea;
+            border-radius: 10px;
+            color: #fff;
+            font-size: 16px;
+            margin-bottom: 15px;
+            box-sizing: border-box;
+        }
+        .btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: #fff;
+            padding: 15px 40px;
+            border: none;
+            border-radius: 50px;
+            font-weight: bold;
+            cursor: pointer;
+            font-size: 18px;
+            width: 100%;
+            transition: all 0.3s;
+            text-decoration: none;
+            display: inline-block;
+            box-sizing: border-box;
+        }
+        .btn:hover {
+            transform: scale(1.05);
+            box-shadow: 0 10px 30px rgba(102, 126, 234, 0.5);
+        }
+        .error {
+            background: #ff4444;
+            color: #fff;
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            display: none;
+        }
+        .help-btn {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: #fff;
+            padding: 15px 25px;
+            border-radius: 50px;
+            text-decoration: none;
+            font-weight: bold;
+            box-shadow: 0 10px 30px rgba(102, 126, 234, 0.5);
+            transition: all 0.3s;
+        }
+        .help-btn:hover {
+            transform: scale(1.1);
+        }
+        .icon {
+            font-size: 4em;
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="icon">⬇️</div>
+        <h1>Download File</h1>
+        
+        <div class="file-info">
+            <div class="file-info-row">
+                <span class="label">📁 File Name:</span>
+                <span class="value">{{ file_name }}</span>
+            </div>
+            <div class="file-info-row">
+                <span class="label">📦 Size:</span>
+                <span class="value">{{ "%.2f"|format(file_size / (1024*1024)) }} MB</span>
+            </div>
+        </div>
+
+        <div id="error-msg" class="error"></div>
+
+        {% if has_password %}
+        <div id="password-section" class="password-section">
+            <h3 style="margin-top: 0;">🔐 Password Required</h3>
+            <input type="password" id="password-input" placeholder="Enter password">
+            <button class="btn" onclick="downloadWithPassword()">Unlock & Download</button>
+        </div>
+        {% else %}
+        <a href="/api/download/{{ token }}" class="btn" download>⬇️ Download Now</a>
+        {% endif %}
+    </div>
+
+    <a href="https://t.me/YOUR_OWNER_USERNAME" class="help-btn" target="_blank">❓ Need Help?</a>
+
+    <script>
+        async function downloadWithPassword() {
+            const password = document.getElementById('password-input').value;
+            
+            if (!password) {
+                showError('Password enter kar bhai! 😑');
+                return;
+            }
+
+            try {
+                const formData = new FormData();
+                formData.append('password', password);
+
+                const response = await fetch('/verify_password/{{ token }}', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    // Start download
+                    window.location.href = '/api/download/{{ token }}?password=' + encodeURIComponent(password);
+                } else {
+                    showError(data.message || 'Wrong password bhai! 🚫');
+                }
+            } catch (error) {
+                showError('Error: ' + error.message);
+            }
+        }
+
+        function showError(message) {
+            const errorDiv = document.getElementById('error-msg');
+            errorDiv.textContent = message;
+            errorDiv.style.display = 'block';
+            
+            setTimeout(() => {
+                errorDiv.style.display = 'none';
+            }, 5000);
+        }
+
+        // Enter key support
+        document.getElementById('password-input')?.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                downloadWithPassword();
+            }
+        });
+    </script>
+</body>
+</html>
