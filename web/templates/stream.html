@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Stream - {{ file_name }}</title>
+    <link rel="stylesheet" href="/static/style.css">
+    <style>
+        body {
+            background: #0a0a0a;
+            color: #fff;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+        }
+        .container {
+            max-width: 900px;
+            width: 100%;
+            background: #1a1a1a;
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+        }
+        h1 {
+            text-align: center;
+            margin-bottom: 30px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            font-size: 2em;
+        }
+        .file-info {
+            background: #2a2a2a;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+        }
+        .file-info h3 {
+            margin: 0 0 10px 0;
+            color: #667eea;
+        }
+        .password-section {
+            background: #2a2a2a;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+        }
+        input[type="password"] {
+            width: 100%;
+            padding: 12px;
+            background: #1a1a1a;
+            border: 2px solid #667eea;
+            border-radius: 8px;
+            color: #fff;
+            font-size: 16px;
+            margin-bottom: 10px;
+        }
+        .btn {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: #fff;
+            padding: 12px 30px;
+            border: none;
+            border-radius: 50px;
+            font-weight: bold;
+            cursor: pointer;
+            font-size: 16px;
+            width: 100%;
+            transition: all 0.3s;
+        }
+        .btn:hover {
+            transform: scale(1.05);
+            box-shadow: 0 10px 30px rgba(102, 126, 234, 0.5);
+        }
+        .video-container {
+            background: #000;
+            border-radius: 10px;
+            overflow: hidden;
+            margin-bottom: 20px;
+        }
+        video, audio {
+            width: 100%;
+            max-height: 500px;
+        }
+        .error {
+            background: #ff4444;
+            color: #fff;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            display: none;
+        }
+        .help-btn {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: #fff;
+            padding: 15px 25px;
+            border-radius: 50px;
+            text-decoration: none;
+            font-weight: bold;
+            box-shadow: 0 10px 30px rgba(102, 126, 234, 0.5);
+            transition: all 0.3s;
+        }
+        .help-btn:hover {
+            transform: scale(1.1);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔥 Stream File 🔥</h1>
+        
+        <div class="file-info">
+            <h3>📁 {{ file_name }}</h3>
+        </div>
+
+        <div id="error-msg" class="error"></div>
+
+        {% if has_password %}
+        <div id="password-section" class="password-section">
+            <h3>🔐 Password Required</h3>
+            <input type="password" id="password-input" placeholder="Enter password">
+            <button class="btn" onclick="verifyPassword()">Unlock & Stream</button>
+        </div>
+        {% endif %}
+
+        <div id="video-container" class="video-container" style="display: {% if has_password %}none{% else %}block{% endif %};">
+            <video id="video-player" controls controlsList="nodownload">
+                <source src="/api/stream/{{ token }}" type="video/mp4">
+                Your browser does not support video playback.
+            </video>
+        </div>
+    </div>
+
+    <a href="https://t.me/YOUR_OWNER_USERNAME" class="help-btn" target="_blank">❓ Need Help?</a>
+
+    <script>
+        let currentPassword = null;
+
+        async function verifyPassword() {
+            const password = document.getElementById('password-input').value;
+            
+            if (!password) {
+                showError('Password enter kar bhai! 😑');
+                return;
+            }
+
+            try {
+                const formData = new FormData();
+                formData.append('password', password);
+
+                const response = await fetch('/verify_password/{{ token }}', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    currentPassword = password;
+                    document.getElementById('password-section').style.display = 'none';
+                    document.getElementById('video-container').style.display = 'block';
+                    
+                    // Update video source with password
+                    const video = document.getElementById('video-player');
+                    video.src = '/api/stream/{{ token }}?password=' + encodeURIComponent(password);
+                    video.load();
+                } else {
+                    showError(data.message || 'Wrong password bhai! 🚫');
+                }
+            } catch (error) {
+                showError('Error: ' + error.message);
+            }
+        }
+
+        function showError(message) {
+            const errorDiv = document.getElementById('error-msg');
+            errorDiv.textContent = message;
+            errorDiv.style.display = 'block';
+            
+            setTimeout(() => {
+                errorDiv.style.display = 'none';
+            }, 5000);
+        }
+
+        // Enter key support
+        document.getElementById('password-input')?.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                verifyPassword();
+            }
+        });
+    </script>
+</body>
+</html>
